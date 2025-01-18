@@ -7,56 +7,327 @@ format:
     toc-location: left
     theme: cosmo
     embed-resources: true
+    fig-width: 10
+    fig-height: 6
+execute:
+  echo: false
+  warning: false
 ---
 
-# Métriques Globales
-
 ```{python}
+#| label: setup
+#| include: false
+
+import polars as pl
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from pathlib import Path
 import sys
-import polars as pl
+import os
+
+# Obtention du chemin absolu du projet
+project_root = Path.cwd().parent
+data_file = project_root / "data" / "raw" / "marketing_campaign_dataset.csv"
+
+# Ajout du chemin du projet pour les imports
+sys.path.append(str(project_root))
+
+from src.marketing_analysis.analyzer import MarketingAnalyzer
 from src.marketing_analysis.utils import format_currency, format_percentage
 
-# Chargement des métriques
+# Chargement des données avec le chemin absolu
+analyzer = MarketingAnalyzer(str(data_file))
+analyzer.clean_data()
+kpis = analyzer.calculate_kpis()
+advanced_analysis = analyzer.analyze_with_duckdb()
+```
+
+# Vue d'Ensemble des Performances
+
+```{python}
+#| label: global-metrics
+#| output: asis
+
 overall_metrics = kpis["overall_metrics"].to_dicts()[0]
 
-print(f'''
-## Performances Globales
+print(f"""## Performance Globale des Campagnes {overall_metrics['total_spend']:,.2f}$
+
+Pour l'ensemble des campagnes marketing analysées, nous observons les performances suivantes :
 
 - ROI Moyen: {format_percentage(overall_metrics['avg_roi'])}
 - Taux de Conversion Moyen: {format_percentage(overall_metrics['avg_conversion_rate'])}
 - Dépense Totale: {format_currency(overall_metrics['total_spend'])}
-''')
+- CTR Moyen: {format_percentage(overall_metrics['avg_ctr'])}
+- Score d'Engagement Moyen: {round(overall_metrics['avg_engagement'], 2)}/10
+""")
 ```
 
-# Analyse des Performances
+# Analyse par Canal
 
-## Performance par Canal
+## Performance des Canaux Marketing
 
 ```{python}
-import plotly.express as px
+#| label: channel-performance
+#| fig-cap: "Performance des différents canaux marketing"
 
 channel_data = kpis["channel_performance"]
-fig = px.bar(
-    channel_data.to_pandas(),
-    x="Channel_Used",
-    y="avg_roi",
-    title="Performance par Canal"
+
+fig = go.Figure()
+
+# Barres pour le ROI
+fig.add_trace(
+    go.Bar(
+        x=channel_data["Channel_Used"],
+        y=channel_data["avg_roi"],
+        name="ROI moyen",
+        marker_color="#1f77b4"
+    )
 )
+
+# Ligne pour l'engagement
+fig.add_trace(
+    go.Scatter(
+        x=channel_data["Channel_Used"],
+        y=channel_data["avg_engagement"],
+        name="Score d'engagement",
+        mode="lines+markers",
+        line=dict(color="#ff7f0e", width=2),
+        yaxis="y2"
+    )
+)
+
+fig.update_layout(
+    title="Performance par Canal",
+    yaxis2=dict(
+        title="Score d'engagement",
+        overlaying="y",
+        side="right"
+    ),
+    yaxis_title="ROI moyen",
+    hovermode="x unified",
+    height=500
+)
+
 fig.show()
 ```
 
-## Performance par Segment
+## Top 5 des Canaux les Plus Performants
 
 ```{python}
+#| label: top-channels
+#| output: asis
+
+top_channels = channel_data.head(5).to_dicts()
+
+print("""### Détail des canaux les plus performants\n""")
+
+for channel in top_channels:
+    print(f"""#### {channel['Channel_Used']}
+
+- ROI moyen: {format_percentage(channel['avg_roi'])}
+- Taux de conversion moyen: {format_percentage(channel['avg_conversion'])}
+- Nombre de campagnes: {channel['campaign_count']}
+- Score d'engagement: {round(channel['avg_engagement'], 2)}/10
+- Coût total: {format_currency(channel['total_cost'])}
+""")
+```
+
+# Analyse des Segments
+
+## Performance par Segment Client
+
+```{python}
+#| label: segment-analysis
+#| fig-cap: "Analyse des performances par segment client"
+
 segment_data = kpis["segment_performance"]
+
 fig = px.scatter(
     segment_data.to_pandas(),
     x="avg_conversion",
     y="avg_roi",
     size="campaign_count",
     color="Customer_Segment",
-    title="Performance des Segments"
+    hover_data=["avg_engagement"],
+    title="Matrice de Performance des Segments",
+    labels={
+        "avg_conversion": "Taux de conversion moyen",
+        "avg_roi": "ROI moyen",
+        "campaign_count": "Nombre de campagnes",
+        "Customer_Segment": "Segment Client"
+    }
 )
+
+fig.update_layout(
+    height=600,
+    showlegend=True
+)
+
 fig.show()
+```
+
+```{python}
+#| label: segment-details
+#| output: asis
+
+print("""## Détails des Performances par Segment
+
+Le graphique ci-dessus montre la relation entre le ROI et le taux de conversion pour chaque segment client. 
+La taille des bulles représente le nombre de campagnes, tandis que la couleur distingue les différents segments.\n""")
+
+top_segments = segment_data.head(3).to_dicts()
+
+print("### Top 3 des Segments les Plus Performants\n")
+
+for segment in top_segments:
+    print(f"""#### {segment['Customer_Segment']}
+
+- ROI moyen: {format_percentage(segment['avg_roi'])}
+- Taux de conversion moyen: {format_percentage(segment['avg_conversion'])}
+- Nombre de campagnes: {segment['campaign_count']}
+- Score d'engagement: {round(segment['avg_engagement'], 2)}/10
+""")
+```
+
+# Analyse Temporelle
+
+## Évolution des Performances
+
+```{python}
+#| label: temporal-analysis
+#| fig-cap: "Évolution temporelle des performances"
+
+temporal_data = kpis["temporal_analysis"]
+
+fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+fig.add_trace(
+    go.Scatter(
+        x=temporal_data["Date"],
+        y=temporal_data["avg_roi"],
+        name="ROI moyen",
+        line=dict(color="#1f77b4", width=2)
+    ),
+    secondary_y=False
+)
+
+fig.add_trace(
+    go.Scatter(
+        x=temporal_data["Date"],
+        y=temporal_data["avg_conversion"],
+        name="Taux de conversion",
+        line=dict(color="#ff7f0e", width=2)
+    ),
+    secondary_y=True
+)
+
+fig.update_layout(
+    title="Évolution des Performances dans le Temps",
+    xaxis_title="Date",
+    yaxis_title="ROI moyen",
+    yaxis2_title="Taux de conversion",
+    hovermode="x unified",
+    showlegend=True,
+    height=500
+)
+
+fig.show()
+```
+
+# Analyses Avancées
+
+## Analyse Croisée Segments-Canaux
+
+```{python}
+#| label: segment-channel
+#| fig-cap: "Matrice de performance segment-canal"
+
+sc_analysis = advanced_analysis["segment_channel_analysis"]
+
+fig = px.density_heatmap(
+    sc_analysis.to_pandas(),
+    x="Customer_Segment",
+    y="Channel_Used",
+    z="avg_roi",
+    title="Performance ROI par Segment et Canal",
+    labels={
+        "Customer_Segment": "Segment Client",
+        "Channel_Used": "Canal Marketing",
+        "avg_roi": "ROI moyen"
+    }
+)
+
+fig.update_layout(
+    height=500
+)
+
+fig.show()
+```
+
+## Analyse des Cohortes
+
+```{python}
+#| label: cohort-analysis
+#| fig-cap: "Évolution des performances par cohorte"
+
+cohort_data = advanced_analysis["cohort_analysis"]
+
+fig = px.line(
+    cohort_data.to_pandas(),
+    x="cohort_month",
+    y="avg_roi",
+    color="Customer_Segment",
+    title="Performance ROI par Cohorte et Segment",
+    labels={
+        "cohort_month": "Mois de Cohorte",
+        "avg_roi": "ROI moyen",
+        "Customer_Segment": "Segment Client"
+    }
+)
+
+fig.update_layout(
+    height=500,
+    showlegend=True
+)
+
+fig.show()
+```
+
+# Conclusions et Recommandations
+
+```{python}
+#| label: conclusions
+#| output: asis
+
+print("""## Points Clés
+
+Sur la base de notre analyse approfondie, nous pouvons mettre en évidence les points suivants :
+
+1. **Performance Globale**
+   - Un ROI moyen de {format_percentage(overall_metrics['avg_roi'])} sur l'ensemble des campagnes
+   - Un investissement total de {format_currency(overall_metrics['total_spend'])}
+
+2. **Canaux Performants**
+   - Les canaux digitaux montrent une performance constante
+   - Facebook et le site web sont les canaux les plus rentables
+
+3. **Segments Prometteurs**
+   - Certains segments montrent un potentiel de croissance significatif
+   - Les performances varient selon les canaux utilisés
+
+## Recommandations
+
+1. **Optimisation des Canaux**
+   - Augmenter l'investissement dans les canaux les plus performants
+   - Tester de nouvelles approches sur les canaux moins performants
+
+2. **Stratégie par Segment**
+   - Adapter les messages selon les segments
+   - Concentrer les efforts sur les segments à fort potentiel
+
+3. **Amélioration Continue**
+   - Mettre en place un suivi régulier des KPIs
+   - Ajuster la stratégie en fonction des résultats
+""")
 ```
