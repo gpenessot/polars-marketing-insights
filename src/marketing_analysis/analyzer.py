@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, Any, Tuple
 from datetime import datetime
 
-from .utils import clean_monetary_value, calculate_derived_metrics
+from .utils import clean_monetary_value, calculate_derived_metrics, format_percentage, format_currency
 from .visualization import create_performance_plots
 
 class MarketingAnalyzer:
