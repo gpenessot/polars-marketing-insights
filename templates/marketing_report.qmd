@@ -1,0 +1,62 @@
+---
+title: "Rapport d'Analyse Marketing"
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-location: left
+    theme: cosmo
+    embed-resources: true
+---
+
+# Métriques Globales
+
+```{python}
+from pathlib import Path
+import sys
+import polars as pl
+from src.marketing_analysis.utils import format_currency, format_percentage
+
+# Chargement des métriques
+overall_metrics = kpis["overall_metrics"].to_dicts()[0]
+
+print(f'''
+## Performances Globales
+
+- ROI Moyen: {format_percentage(overall_metrics['avg_roi'])}
+- Taux de Conversion Moyen: {format_percentage(overall_metrics['avg_conversion_rate'])}
+- Dépense Totale: {format_currency(overall_metrics['total_spend'])}
+''')
+```
+
+# Analyse des Performances
+
+## Performance par Canal
+
+```{python}
+import plotly.express as px
+
+channel_data = kpis["channel_performance"]
+fig = px.bar(
+    channel_data.to_pandas(),
+    x="Channel_Used",
+    y="avg_roi",
+    title="Performance par Canal"
+)
+fig.show()
+```
+
+## Performance par Segment
+
+```{python}
+segment_data = kpis["segment_performance"]
+fig = px.scatter(
+    segment_data.to_pandas(),
+    x="avg_conversion",
+    y="avg_roi",
+    size="campaign_count",
+    color="Customer_Segment",
+    title="Performance des Segments"
+)
+fig.show()
+```

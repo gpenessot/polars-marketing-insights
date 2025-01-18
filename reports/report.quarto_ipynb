@@ -1,0 +1,113 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "---\n",
+        "title: \"Rapport d'Analyse Marketing\"\n",
+        "format:\n",
+        "  html:\n",
+        "    code-fold: true\n",
+        "    toc: true\n",
+        "    toc-location: left\n",
+        "    theme: cosmo\n",
+        "    embed-resources: true\n",
+        "---\n",
+        "\n",
+        "\n",
+        "# Métriques Globales\n"
+      ],
+      "id": "66d2c32b"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "from pathlib import Path\n",
+        "import sys\n",
+        "import polars as pl\n",
+        "from src.marketing_analysis.utils import format_currency, format_percentage\n",
+        "\n",
+        "# Chargement des métriques\n",
+        "overall_metrics = kpis[\"overall_metrics\"].to_dicts()[0]\n",
+        "\n",
+        "print(f'''\n",
+        "## Performances Globales\n",
+        "\n",
+        "- ROI Moyen: {format_percentage(overall_metrics['avg_roi'])}\n",
+        "- Taux de Conversion Moyen: {format_percentage(overall_metrics['avg_conversion_rate'])}\n",
+        "- Dépense Totale: {format_currency(overall_metrics['total_spend'])}\n",
+        "''')"
+      ],
+      "id": "ed210e25",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "# Analyse des Performances\n",
+        "\n",
+        "## Performance par Canal\n"
+      ],
+      "id": "1a47c240"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "import plotly.express as px\n",
+        "\n",
+        "channel_data = kpis[\"channel_performance\"]\n",
+        "fig = px.bar(\n",
+        "    channel_data.to_pandas(),\n",
+        "    x=\"Channel_Used\",\n",
+        "    y=\"avg_roi\",\n",
+        "    title=\"Performance par Canal\"\n",
+        ")\n",
+        "fig.show()"
+      ],
+      "id": "698aceea",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Performance par Segment\n"
+      ],
+      "id": "f04fc241"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "segment_data = kpis[\"segment_performance\"]\n",
+        "fig = px.scatter(\n",
+        "    segment_data.to_pandas(),\n",
+        "    x=\"avg_conversion\",\n",
+        "    y=\"avg_roi\",\n",
+        "    size=\"campaign_count\",\n",
+        "    color=\"Customer_Segment\",\n",
+        "    title=\"Performance des Segments\"\n",
+        ")\n",
+        "fig.show()"
+      ],
+      "id": "caab92e5",
+      "execution_count": null,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 5
+}

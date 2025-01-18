@@ -1,0 +1,61 @@
+
+    <html>
+    <head>
+        <title>Rapport d'Analyse Marketing</title>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+        <style>
+            iframe {
+                width: 100%;
+                height: 600px;
+                border: none;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+        </style>
+    </head>
+    <body class="bg-gray-100 p-8">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-3xl font-bold mb-8">Rapport d'Analyse Marketing</h1>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-4">Métriques Globales</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="p-4 bg-blue-50 rounded">
+                        <p class="text-sm text-gray-600">ROI Moyen</p>
+                        <p class="text-2xl font-bold">5.00%</p>
+                    </div>
+                    <div class="p-4 bg-green-50 rounded">
+                        <p class="text-sm text-gray-600">Taux de Conversion Moyen</p>
+                        <p class="text-2xl font-bold">0.08%</p>
+                    </div>
+                    <div class="p-4 bg-purple-50 rounded">
+                        <p class="text-sm text-gray-600">Dépense Totale</p>
+                        <p class="text-2xl font-bold">$2,500,878,608.00</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold mb-4">Top Canaux</h2>
+                    <iframe src="visualizations/channel_comparison.html"></iframe>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold mb-4">Top Segments</h2>
+                    <iframe src="visualizations/segment_matrix.html"></iframe>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-4">Tendances Temporelles</h2>
+                <iframe src="visualizations/temporal_trends.html"></iframe>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-4">Vue d'Ensemble des Performances</h2>
+                <iframe src="visualizations/performance_overview.html"></iframe>
+            </div>
+        </div>
+    </body>
+    </html>
+    
