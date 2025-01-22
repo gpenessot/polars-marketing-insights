@@ -131,5 +131,6 @@ Ce projet utilise plusieurs bibliothèques open source remarquables :
 - [Plotly](https://plotly.com)
 - [Quarto](https://quarto.org)
 
----
-Créé par [Gaël Penessot](https://www.linkedin.com/in/gael-penessot/) avec ❤️
+## ✍️ Auteur
+
+Créé avec ❤️ par [Gaël Penessot](https://www.linkedin.com/in/gael-penessot), auteur de [Business Intelligence with Python](https://amzn.to/42jjs1o)
